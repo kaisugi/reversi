@@ -7,6 +7,7 @@ pub enum Wl {
   Tie
 }
 
+#[derive(Clone)]
 pub enum Move {
   Mv (i32, i32),
   Pass,

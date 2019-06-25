@@ -97,37 +97,6 @@ fn remove_times(s: &mut String, n: usize) {
   }
 }
 
-fn strtol(s: &mut String) -> i32 {
-  let mut ans = 0;
-  let mut index = 0;
-
-  let mut is_negative = false;
-
-  if &(s.as_str())[..1] == "-" {
-    is_negative = true;
-    remove_times(s, 1);
-  }
-
-  for c in s.chars() {
-    if let Some(n) = c.to_digit(10) {
-      ans = ans * 10 + (n as i32);
-    } else {
-      break;
-    }
-    index += 1;
-  }
-
-  for _ in 0..index {
-    remove_times(s, 1);
-  }
-  
-  if is_negative {
-    ans * (-1)
-  } else {
-    ans
-  }
-}
-
 #[test]
 fn check_tokenize() {
   let mut input = "OPEN Anon.".to_string();
