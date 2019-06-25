@@ -1,4 +1,4 @@
-type Color = i32;
+pub type Color = i32;
 
 pub fn opposite_color(c: Color) -> Color {
   (2 - c) + 1

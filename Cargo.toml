@@ -1,7 +1,7 @@
 [package]
 name = "Reversi"
 version = "0.1.0"
-authors = ["7ma7X <7X.rusk@gmail.com>"]
+authors = ["Kaito Sugimoto <7X.rusk@gmail.com>"]
 edition = "2018"
 
 [dependencies]

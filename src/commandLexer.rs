@@ -1,9 +1,10 @@
 use std::process;
 use regex::Regex;
 
+#[derive(PartialEq)]
 pub enum Token {
   NL,
-  Int(i32),
+  INT(i32),
   OPEN,
   END,
   MOVE,
@@ -26,7 +27,7 @@ pub fn tokenize(input: &mut String, tokens: &mut Vec<Token>) {
 
   while !(p.is_empty()) {
     if let Some(_) = re.captures(p.as_str()) {
-      tokens.push(Token::Int(strtol(p)));
+      tokens.push(Token::INT(strtol(p)));
     } else {
       if p.starts_with(" ") || p.starts_with("\t") {
         remove_times(p, 1);
