@@ -1,7 +1,7 @@
 use std::process;
 use regex::Regex;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Token {
   NL,
   INT(i32),
@@ -23,11 +23,15 @@ pub enum Token {
 pub fn tokenize(input: &mut String, tokens: &mut Vec<Token>) {
   let p = input;
   let re = Regex::new(r"^-?\d+").unwrap();
-  let mut tmp_str = String::from("");
+  let re2 = Regex::new(r"^[^ \t\n\r]+").unwrap();
 
   while !(p.is_empty()) {
-    if let Some(_) = re.captures(p.as_str()) {
-      tokens.push(Token::INT(strtol(p)));
+    if let Some(cap) = re.captures(p.as_str()) {
+      let res = (&cap[0]).to_string();
+      let n = res.len();
+      let m: i32 = res.parse().unwrap();
+      tokens.push(Token::INT(m));
+      remove_times(p, n);
     } else {
       if p.starts_with(" ") || p.starts_with("\t") {
         remove_times(p, 1);
@@ -68,17 +72,14 @@ pub fn tokenize(input: &mut String, tokens: &mut Vec<Token>) {
         tokens.push(Token::BLACK);
         remove_times(p, 5);
       } else {
-        match p.chars().nth(0).unwrap() {
-          ' ' | '\t' | '\n' | '\r' => {
-            let s = tmp_str.clone();
-            tokens.push(Token::STR(s));
-            tmp_str = String::from("");
-          }
-          c => {
-            tmp_str += &c.to_string();
-          }
+        if let Some(cap) = re2.captures(p.as_str()) {
+          let res = (&cap[0]).to_string();
+          let n = res.len();
+          tokens.push(Token::STR(res));
+          remove_times(p, n);
+        } else {
+          remove_times(p, 1);
         }
-        remove_times(p, 1);
       }
     }
   }
@@ -125,4 +126,22 @@ fn strtol(s: &mut String) -> i32 {
   } else {
     ans
   }
+}
+
+#[test]
+fn check_tokenize() {
+  let mut input = "OPEN Anon.".to_string();
+  let mut tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::OPEN, Token::STR("Anon.".to_string()), Token::EOF]);
+
+  input = "START BLACK Anon. 600000".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::START, Token::BLACK, Token::STR("Anon.".to_string()), Token::INT(600000), Token::EOF]);
+
+  input = "MOVE D3".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::MOVE, Token::STR("D3".to_string()), Token::EOF]);
 }

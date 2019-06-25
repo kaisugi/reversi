@@ -5,9 +5,11 @@ mod color;
 mod command;
 mod commandLexer;
 mod commandParser;
+mod play;
 
 use clap::{Arg, App};
 use std::env;
+use std::io::{BufWriter, Write};
 use std::net::{ToSocketAddrs, TcpStream};
 use color::Color;
 
@@ -54,6 +56,10 @@ fn main() {
   println!("Connecting to {} {}.", opt_host, opt_port);
 
   if let Ok(stream) = TcpStream::connect(addr) {
-    println!("Connection Ok.")
+    println!("Connection Ok.");
+    let mut writer = BufWriter::new(stream);
+    writer.write(b"This is test").unwrap();
+    writer.flush();
   }
+
 }

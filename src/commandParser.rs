@@ -3,9 +3,6 @@ use crate::command::*;
 use crate::commandLexer::*;
 
 pub fn parse(tokens: &mut Vec<Token>) -> Command {
-  let white: Color = 1;
-  let black: Color = 2;
-
   if tokens[0] == Token::OPEN {
     if let Token::STR(s) = &tokens[1] {
       let t = (*s).clone();
