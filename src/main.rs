@@ -3,13 +3,13 @@ extern crate clap;
 
 mod color;
 mod command;
-mod commandLexer;
-mod commandParser;
+mod command_lexer;
+mod command_parser;
 mod play;
 
 use clap::{Arg, App};
 use std::io::{BufWriter, Write};
-use std::net::{ToSocketAddrs, TcpStream};
+use std::net::{ToSocketAddrs, TcpStream, SocketAddr, Ipv4Addr};
 use command::*;
 
 fn output_command(stream: &TcpStream, command: Command) {
@@ -104,18 +104,21 @@ fn main() {
 
   let host_and_port = format!("{}:{}", opt_host, opt_port);
   let mut addrs = host_and_port.to_socket_addrs().unwrap();
-  let mut addr = addrs.next().unwrap();
-  println!("Connecting to {} {}.", opt_host, opt_port);
-
-  match TcpStream::connect(addr) {
-    Err(_) => {
-      println!("Connection NG.");
+  
+  // IPv6のアドレスが混入すると上手く接続できないので, 絞る
+  if let Some(addr) = addrs.find(|x| (*x).is_ipv4()) {
+    match TcpStream::connect(addr) {
+      Err(_) => {
+        println!("Connection NG.");
+      }
+      Ok(stream) => {
+        println!("Connection Ok.");
+  
+        output_command(&stream, Command::Open(opt_player_name));
+      }
     }
-    Ok(stream) => {
-      println!("Connection Ok.");
-
-      output_command(&stream, Command::Open(opt_player_name));
-    }
+  } else {
+    eprintln!("Invalid Host:Port Number");
   }
 
 }

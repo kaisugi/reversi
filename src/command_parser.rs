@@ -1,6 +1,6 @@
 use crate::color::*;
 use crate::command::*;
-use crate::commandLexer::*;
+use crate::command_lexer::*;
 
 pub fn parse(tokens: &mut Vec<Token>) -> Command {
   if tokens[0] == Token::OPEN {
