@@ -49,20 +49,19 @@ cargo run --release -- -p 3000 -n PLAYER1
 
 なお、**`--release` オプションを付けないと、最適化が行われず非常に遅くなってしまうので、必ず付けるようにしましょう。**（所要時間で目に見えるレベルで遅くなります。）
 
----
-
 ## Dependencies
 
 プログラムの作成にあたって外部ライブラリをいくつか用いているので、それについて一応注意しておきます。
 
-[clap](https://github.com/clap-rs/clap)  
+### [clap](https://github.com/clap-rs/clap)  
 
-コマンドラインのオプションを処理するために使用しています。
+コマンドライン引数のオプションを処理するために使用しています。
 
-[rand](https://github.com/rust-random/rand)
+### [rand](https://github.com/rust-random/rand)
 
-乱数ライブラリです（Rustでは乱数処理が標準ライブラリの中には存在しません）。OCaml で書かれた初期実装では置ける位置をランダムに選択しているので、それに倣って使っていますが、もし何かしらのアルゴリズムで決め打ちするのであれば rand は不要でしょう。
+乱数ライブラリです（Rustでは乱数処理が標準ライブラリの中には存在しません）。 
+OCaml で書かれた初期実装では置ける位置をランダムに選択しているので、それに倣って使っていますが、もし何かしらのアルゴリズムで決め打ちするのであれば rand は不要でしょう。
 
-[regex](https://github.com/rust-lang/regex)
+### [regex](https://github.com/rust-lang/regex)
 
-正規表現ライブラリです（Rustでは正規表現処理が標準ライブラリの中には存在しません）。`commandLexer.mll` の字句解析を Rust で実装する際に、一部正規表現を用いました。
+正規表現ライブラリです（Rustでは正規表現処理が標準ライブラリの中には存在しません）。  `commandLexer.mll` の字句解析を Rust で実装する際に、一部正規表現を用いました。
