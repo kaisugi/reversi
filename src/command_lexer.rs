@@ -97,6 +97,8 @@ fn remove_times(s: &mut String, n: usize) {
   }
 }
 
+
+
 #[test]
 fn check_tokenize() {
   let mut input = "OPEN Anon.".to_string();

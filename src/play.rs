@@ -106,6 +106,62 @@ pub fn valid_moves (board: &Board, color: Color) -> Vec<(i32, i32)> {
   ans_v
 }
 
+pub fn play (board: &Board, color: Color) -> Move {
+  let ms = valid_moves(board, color);
+  if ms == vec![] {
+    Move::Pass
+  } else {
+    panic!(); // Rust Random
+  }
+}
+
+pub fn count (board: &Board, color: Color) -> i32 {
+  let mut s = 0;
+
+  for i in 1..9 {
+    for j in 1..9 {
+      if board[i][j] == color {
+        s += 1;
+      }
+    }
+  }
+  s
+}
+
+pub fn print_board (board: &Board) {
+  println!(" |A B C D E F G H ");
+  println!("-+----------------");
+
+  for j in 1..9 {
+    print!("{}|", j);
+    for i in 1..9 {
+      print_color(board[i][j]);
+      print!(" ");
+    }
+    print!("\n");
+  }
+  println!("  (X: Black,  O: White)");
+}
+
+pub fn report_result (board: &Board) {
+  println!("========== Final Result ==========");
+  let bc = count(board, black);
+  let wc = count(board, white);
+
+  if bc > wc {
+    println!("*Black wins!*");
+  } else if bc < wc {
+    println!("*White wins!*");
+  } else {
+    println!("*Even*");
+  }
+
+  println!("Black: {}", bc);
+  println!("White: {}", wc);
+  print_board(board);
+}
+
+
 
 #[test]
 fn check() {
@@ -127,4 +183,17 @@ fn check() {
   board[8][1] = black;
   assert_eq!(flippable_indices (&board, black, (1, 8)), vec![(1, 7), (1, 6), (1, 5), (1, 4), (1, 3), (1, 2), (2, 7), (3, 6), (4, 5), (5, 4)]);
   assert_eq!(flippable_indices (&board, black, (6, 1)), vec![(5, 1), (4, 1), (3, 1), (2, 1), (7, 1), (6, 2)]);
+
+  board = init_board();
+  report_result(&board);
+  assert_eq!(valid_moves(&board, black), vec![(3, 4), (4, 3), (5, 6), (6, 5)]);
+  for i in 4..9 {
+    for j in 3..9 {
+      board[i][j] = white;
+    }
+  }
+  board[8][8] = black;
+  board[5][4] = black;
+  report_result(&board);
+  assert_eq!(valid_moves(&board, black), vec![(3, 2), (3, 3), (3, 4), (3, 6), (3, 8), (5, 2), (7, 2), (8, 2)]);
 }
