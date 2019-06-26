@@ -1,4 +1,3 @@
-type Color = i32;
 use crate::color::*;
 
 pub enum Wl {
@@ -7,7 +6,7 @@ pub enum Wl {
   Tie
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Move {
   Mv (i32, i32),
   Pass,

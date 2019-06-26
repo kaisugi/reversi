@@ -115,4 +115,24 @@ fn check_tokenize() {
   tokens = Vec::new();
   tokenize(&mut input, &mut tokens);
   assert_eq!(tokens, vec![Token::MOVE, Token::STR("D3".to_string()), Token::EOF]);
+
+  input = "END LOSE 29 35 DOUBLE_PASS".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::END, Token::LOSE, Token::INT(29), Token::INT(35), Token::STR("DOUBLE_PASS".to_string()), Token::EOF]);
+
+  input = "ACK 600000".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::ACK, Token::INT(600000), Token::EOF]);
+
+  input = "BYE playerA -4 0 4 playerB 4 4 0".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::BYE, Token::STR("playerA".to_string()), Token::INT(-4), Token::INT(0), Token::INT(4), Token::STR("playerB".to_string()), Token::INT(4), Token::INT(4), Token::INT(0), Token::EOF]);
+
+  input = "".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::EOF]);
 }

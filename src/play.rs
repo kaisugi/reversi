@@ -1,5 +1,6 @@
 use crate::color::*;
 use crate::command::*;
+use rand::Rng;
 
 pub type Board = Vec<Vec<Color>>;
 
@@ -70,14 +71,14 @@ pub fn is_valid_move (board: &Board, color: Color, (i, j): (i32, i32)) -> bool {
   board[i as usize][j as usize] == none && is_effective(board, color, (i, j))
 }
 
-pub fn do_move (board: &mut Board, com: Move, color: Color) {
+pub fn do_move (board: &mut Board, com: &Move, color: Color) {
   match com {
     Move::Mv (i, j) => {
-      let ms = flippable_indices(board, color, (i, j));
+      let ms = flippable_indices(board, color, (*i, *j));
       for (ii,jj) in &ms {
         board[*ii as usize][*jj as usize] = color;
       }
-      board[i as usize][j as usize] = color;
+      board[*i as usize][*j as usize] = color;
     }
     _ => {}
   }
@@ -111,22 +112,25 @@ pub fn play (board: &Board, color: Color) -> Move {
   if ms == vec![] {
     Move::Pass
   } else {
-    panic!(); // Rust Random
+    let mut rng = rand::thread_rng();
+    let k = rng.gen_range(0, ms.len());
+    let (i, j) = ms[k];
+    Move::Mv(i, j)
   }
 }
 
-pub fn count (board: &Board, color: Color) -> i32 {
-  let mut s = 0;
-
-  for i in 1..9 {
-    for j in 1..9 {
-      if board[i][j] == color {
-        s += 1;
-      }
-    }
-  }
-  s
-}
+//fn count (board: &Board, color: Color) -> i32 {
+//  let mut s = 0;
+//
+//  for i in 1..9 {
+//    for j in 1..9 {
+//      if board[i][j] == color {
+//        s += 1;
+//      }
+//    }
+//  }
+//  s
+//}
 
 pub fn print_board (board: &Board) {
   println!(" |A B C D E F G H ");
@@ -143,23 +147,23 @@ pub fn print_board (board: &Board) {
   println!("  (X: Black,  O: White)");
 }
 
-pub fn report_result (board: &Board) {
-  println!("========== Final Result ==========");
-  let bc = count(board, black);
-  let wc = count(board, white);
-
-  if bc > wc {
-    println!("*Black wins!*");
-  } else if bc < wc {
-    println!("*White wins!*");
-  } else {
-    println!("*Even*");
-  }
-
-  println!("Black: {}", bc);
-  println!("White: {}", wc);
-  print_board(board);
-}
+//fn report_result (board: &Board) {
+//  println!("========== Final Result ==========");
+//  let bc = count(board, black);
+//  let wc = count(board, white);
+//
+//  if bc > wc {
+//    println!("*Black wins!*");
+//  } else if bc < wc {
+//    println!("*White wins!*");
+//  } else {
+//    println!("*Even*");
+//  }
+//
+//  println!("Black: {}", bc);
+//  println!("White: {}", wc);
+//  print_board(board);
+//}
 
 
 
@@ -185,7 +189,7 @@ fn check() {
   assert_eq!(flippable_indices (&board, black, (6, 1)), vec![(5, 1), (4, 1), (3, 1), (2, 1), (7, 1), (6, 2)]);
 
   board = init_board();
-  report_result(&board);
+  print_board(&board);
   assert_eq!(valid_moves(&board, black), vec![(3, 4), (4, 3), (5, 6), (6, 5)]);
   for i in 4..9 {
     for j in 3..9 {
@@ -194,6 +198,6 @@ fn check() {
   }
   board[8][8] = black;
   board[5][4] = black;
-  report_result(&board);
+  print_board(&board);
   assert_eq!(valid_moves(&board, black), vec![(3, 2), (3, 3), (3, 4), (3, 6), (3, 8), (5, 2), (7, 2), (8, 2)]);
 }

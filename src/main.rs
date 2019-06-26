@@ -1,5 +1,6 @@
-extern crate regex;
 extern crate clap;
+extern crate rand;
+extern crate regex;
 
 mod color;
 mod command;
@@ -10,18 +11,21 @@ mod play;
 use clap::{Arg, App};
 use std::io::{BufWriter, Write};
 use std::io::{BufReader, BufRead};
-use std::net::{ToSocketAddrs, TcpStream, SocketAddr, Ipv4Addr};
+use std::net::{ToSocketAddrs, TcpStream};
+
 use command::*;
+use color::*;
+use play::*;
 use command_lexer::*;
 use command_parser::*;
 
 fn input_command (stream: &TcpStream) -> Command {
-  let report_recv = |s: String| println!("Received: {}", s);
+  let report_recv = |s: &String| println!("Received: {}", *s);
 
   let mut reader = BufReader::new(stream);
   let mut msg = String::new();
   reader.read_line(&mut msg).expect("RECEIVE FAILURE!!!");
-  report_recv(msg);
+  report_recv(&msg);
 
   let mut tokens: Vec<Token> = Vec::new();
   tokenize(&mut msg, &mut tokens);
@@ -88,7 +92,7 @@ fn print_hist (x: &Hist) {
   println!("{}", string_of_hist(x));
 }
 
-fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) {
+fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) -> String {
   let mut maxlen = 0;
   for (a, _) in &scores {
     if (*a).len() > maxlen {
@@ -106,20 +110,109 @@ fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) {
 
   let mut ans = String::from("");
   for (a, (s,w,l)) in &scores {
-    ans = format!("{}:{}") // 同じ文字の繰り返しはどうやる？
+    ans = format!("{}\n{}:{}{} (Win {}, Lose {})", 
+      ans, a, " ".repeat(maxslen + 1 - a.len()), s, w, l);
   }
+  ans
 }
 
 fn print_scores (scores: Vec<(String, (i32, i32, i32))>) {
   print!("{}", string_of_scores(scores));
 }
 
-/**
- * wait_start: state = 0
- * my_move   : state = 1 
- * op_move   : state = 2
- * proc_end  : state = 3
- */
+enum State {
+  WaitStart,
+  MyMove,
+  OpMove,
+  ProcEnd
+}
+
+fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Color, 
+                 hist: &mut Hist, oname: &mut String, mytime: &mut i32,
+                 wl: &mut Wl, n: &mut i32, m: &mut i32, r: &mut String, opt_verbose: bool, opt_player_name: String) {
+  match state {
+    State::WaitStart => {
+      match input_command_multi(stream) {
+        Command::Bye(scores) => {
+          print_scores(scores);
+        }
+        Command::Start(color, oname_new, mytime_new) => {
+          *board = init_board();
+          *oname = oname_new;
+          *mytime = mytime_new;
+          if color == black {
+            playing_games(State::MyMove, stream, board, black, &mut Vec::new(), oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+          } else {
+            playing_games(State::OpMove, stream, board, white, &mut Vec::new(), oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+          }
+        }
+        _ => panic!("Invalid Command")
+      }
+    }
+    State::MyMove => {
+      let pmove = play(board, color);
+      do_move(board, &pmove, color);
+      output_command(stream, Command::Move(pmove));
+
+      if !opt_verbose {
+        println!("--------------------------------------------------------------------------------");
+        println!("PMove: {} {}", string_of_move(pmove), string_of_color(color));
+        print_board(board);
+      }
+
+      match input_command_multi(stream) {
+        Command::Ack(mytime_new) => {
+          *mytime = mytime_new;
+          hist.push(OpMove::PMove(pmove));
+          playing_games(State::OpMove, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+        }
+        Command::End(wl_new, n_new, m_new, r_new) => {
+          *wl = wl_new;
+          *n = n_new;
+          *m = m_new;
+          *r = r_new;
+          playing_games(State::ProcEnd, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+        }
+        _ => panic!("Invalid Command")
+      }
+    }
+    State::OpMove => {
+      match input_command_multi(stream) {
+        Command::Move(omove) => {
+          do_move(board, &omove, opposite_color(color));
+
+          if !opt_verbose {
+            println!("--------------------------------------------------------------------------------");
+            println!("PMove: {} {}", string_of_move(omove), string_of_color(color));
+            print_board(board);
+          }
+
+          hist.push(OpMove::OMove(omove));
+          playing_games(State::MyMove, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+        }
+        Command::End(wl_new, n_new, m_new, r_new) => {
+          *wl = wl_new;
+          *n = n_new;
+          *m = m_new;
+          *r = r_new;
+          playing_games(State::ProcEnd, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+        }
+        _ => panic!("Invalid Command")
+      }
+    }
+    State::ProcEnd => {
+      match wl {
+        Wl::Win  => println!("You win! ({} vs. {}) -- {}.", n, m, r),
+        Wl::Lose => println!("You lose! ({} vs. {}) -- {}.", n, m, r),
+        Wl::Tie  => println!("Draw ({} vs. {}) -- {}.", n, m, r)
+      }
+      println!("Your name: {} ({})  Oppnent name: {} ({}).", opt_player_name, string_of_color(color), oname, string_of_color(opposite_color(color)));
+      print_board(board);
+      print_hist(hist);
+      playing_games(State::WaitStart, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+    }
+  }
+}
 
 
 fn main() {
@@ -171,7 +264,9 @@ fn main() {
       Ok(stream) => {
         println!("Connection Ok.");
   
+        let opt_player_name_clone =opt_player_name.clone();
         output_command(&stream, Command::Open(opt_player_name));
+        playing_games(State::WaitStart, &stream, &mut Vec::new(), white, &mut Vec::new(), &mut String::new(), &mut 0, &mut Wl::Tie, &mut 0, &mut 0, &mut String::new(), opt_verbose, opt_player_name_clone);
       }
     }
   } else {
