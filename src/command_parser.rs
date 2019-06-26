@@ -64,7 +64,6 @@ pub fn parse(tokens: &mut Vec<Token>) -> Command {
     }
   } else if tokens[0] == Token::BYE {
     tokens.remove(0);
-    tokens.pop();
     Command::Bye(render_scores(tokens))
   } else if tokens[0] == Token::NL || tokens[0] == Token::EOF {
     Command::Empty
@@ -76,7 +75,7 @@ pub fn parse(tokens: &mut Vec<Token>) -> Command {
 fn render_scores(tokens: &mut Vec<Token>) -> Vec<(String, (i32, i32, i32))> {
   let mut score_v = Vec::new();
 
-  while !tokens.is_empty() {
+  while tokens.len() >= 4 {
     if let (Token::STR(s), Token::INT(n1), Token::INT(n2), Token::INT(n3)) 
       = (&tokens[0], &tokens[1], &tokens[2], &tokens[3]) 
     {

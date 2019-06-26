@@ -20,7 +20,7 @@ use command_lexer::*;
 use command_parser::*;
 
 fn input_command (stream: &TcpStream) -> Command {
-  let report_recv = |s: &String| println!("Received: {}", *s);
+  let report_recv = |s: &String| print!("Received: {}", *s);
 
   let mut reader = BufReader::new(stream);
   let mut msg = String::new();
@@ -40,18 +40,18 @@ fn input_command_multi (stream: &TcpStream) -> Command {
 }
 
 fn output_command(stream: &TcpStream, command: Command) {
-  let report_sent = |s: String| println!("Sent: {}", s);
+  let report_sent = |s: String| print!("Sent: {}", s);
 
   match command {
     Command::Move(mv) => {
-      let msg = format!("MOVE {}", string_of_move(mv));
+      let msg = format!("MOVE {}\n", string_of_move(mv));
       let mut writer = BufWriter::new(stream);
       writer.write(msg.as_bytes()).expect("SEND FAILURE!!!");
       writer.flush().unwrap();
       report_sent(msg);
     }
     Command::Open(s) => {
-      let msg = format!("OPEN {}", s);
+      let msg = format!("OPEN {}\n", s);
       let mut writer = BufWriter::new(stream);
       writer.write(msg.as_bytes()).expect("SEND FAILURE!!!");
       writer.flush().unwrap();
@@ -92,33 +92,33 @@ fn print_hist (x: &Hist) {
   println!("{}", string_of_hist(x));
 }
 
-fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) -> String {
-  let mut maxlen = 0;
-  for (a, _) in &scores {
-    if (*a).len() > maxlen {
-      maxlen = (*a).len();
-    }
-  }
-
-  let mut maxslen = 0;
-  for (_, (s,_,_)) in &scores {
-    let string_s = format!("{}", *s);
-    if string_s.len() > maxslen {
-      maxslen = string_s.len();
-    }
-  }
-
-  let mut ans = String::from("");
-  for (a, (s,w,l)) in &scores {
-    ans = format!("{}\n{}:{}{} (Win {}, Lose {})", 
-      ans, a, " ".repeat(maxslen + 1 - a.len()), s, w, l);
-  }
-  ans
-}
-
-fn print_scores (scores: Vec<(String, (i32, i32, i32))>) {
-  print!("{}", string_of_scores(scores));
-}
+//fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) -> String {
+//  let mut maxlen = 0;
+//  for (a, _) in &scores {
+//    if (*a).len() > maxlen {
+//      maxlen = (*a).len();
+//    }
+//  }
+//
+//  let mut maxslen = 0;
+//  for (_, (s,_,_)) in &scores {
+//    let string_s = format!("{}", *s);
+//    if string_s.len() > maxslen {
+//      maxslen = string_s.len();
+//    }
+//  }
+//
+//  let mut ans = String::from("");
+//  for (a, (s,w,l)) in &scores {
+//    ans = format!("{}\n{}:{}{} (Win {}, Lose {})", 
+//      ans, a, " ".repeat(maxslen + 1 - a.len()), s, w, l);
+//  }
+//  ans
+//}
+//
+//fn print_scores (scores: Vec<(String, (i32, i32, i32))>) {
+//  print!("{}", string_of_scores(scores));
+//}
 
 enum State {
   WaitStart,
@@ -133,8 +133,8 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
   match state {
     State::WaitStart => {
       match input_command_multi(stream) {
-        Command::Bye(scores) => {
-          print_scores(scores);
+        Command::Bye(_scores) => {
+          println!("\nSuccessfully terminated.");
         }
         Command::Start(color, oname_new, mytime_new) => {
           *board = init_board();
@@ -154,7 +154,7 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
       do_move(board, &pmove, color);
       output_command(stream, Command::Move(pmove));
 
-      if !opt_verbose {
+      if opt_verbose {
         println!("--------------------------------------------------------------------------------");
         println!("PMove: {} {}", string_of_move(pmove), string_of_color(color));
         print_board(board);
@@ -181,9 +181,9 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
         Command::Move(omove) => {
           do_move(board, &omove, opposite_color(color));
 
-          if !opt_verbose {
+          if opt_verbose {
             println!("--------------------------------------------------------------------------------");
-            println!("PMove: {} {}", string_of_move(omove), string_of_color(color));
+            println!("OMove: {} {}", string_of_move(omove), string_of_color(color));
             print_board(board);
           }
 
@@ -263,8 +263,8 @@ fn main() {
       }
       Ok(stream) => {
         println!("Connection Ok.");
-  
-        let opt_player_name_clone =opt_player_name.clone();
+
+        let opt_player_name_clone = opt_player_name.clone();
         output_command(&stream, Command::Open(opt_player_name));
         playing_games(State::WaitStart, &stream, &mut Vec::new(), white, &mut Vec::new(), &mut String::new(), &mut 0, &mut Wl::Tie, &mut 0, &mut 0, &mut String::new(), opt_verbose, opt_player_name_clone);
       }
