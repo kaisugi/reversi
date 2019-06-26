@@ -9,8 +9,31 @@ mod play;
 
 use clap::{Arg, App};
 use std::io::{BufWriter, Write};
+use std::io::{BufReader, BufRead};
 use std::net::{ToSocketAddrs, TcpStream, SocketAddr, Ipv4Addr};
 use command::*;
+use command_lexer::*;
+use command_parser::*;
+
+fn input_command (stream: &TcpStream) -> Command {
+  let report_recv = |s: String| println!("Received: {}", s);
+
+  let mut reader = BufReader::new(stream);
+  let mut msg = String::new();
+  reader.read_line(&mut msg).expect("RECEIVE FAILURE!!!");
+  report_recv(msg);
+
+  let mut tokens: Vec<Token> = Vec::new();
+  tokenize(&mut msg, &mut tokens);
+  parse(&mut tokens)
+}
+
+fn input_command_multi (stream: &TcpStream) -> Command {
+  match input_command(stream) {
+    Command::Empty => input_command_multi(stream),
+    r              => r
+  }
+}
 
 fn output_command(stream: &TcpStream, command: Command) {
   let report_sent = |s: String| println!("Sent: {}", s);
@@ -19,14 +42,14 @@ fn output_command(stream: &TcpStream, command: Command) {
     Command::Move(mv) => {
       let msg = format!("MOVE {}", string_of_move(mv));
       let mut writer = BufWriter::new(stream);
-      writer.write(msg.as_bytes()).unwrap();
+      writer.write(msg.as_bytes()).expect("SEND FAILURE!!!");
       writer.flush().unwrap();
       report_sent(msg);
     }
     Command::Open(s) => {
       let msg = format!("OPEN {}", s);
       let mut writer = BufWriter::new(stream);
-      writer.write(msg.as_bytes()).unwrap();
+      writer.write(msg.as_bytes()).expect("SEND FAILURE!!!");
       writer.flush().unwrap();
       report_sent(msg);
     }
@@ -64,6 +87,40 @@ fn string_of_hist (x: &Hist) -> String {
 fn print_hist (x: &Hist) {
   println!("{}", string_of_hist(x));
 }
+
+fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) {
+  let mut maxlen = 0;
+  for (a, _) in &scores {
+    if (*a).len() > maxlen {
+      maxlen = (*a).len();
+    }
+  }
+
+  let mut maxslen = 0;
+  for (_, (s,_,_)) in &scores {
+    let string_s = format!("{}", *s);
+    if string_s.len() > maxslen {
+      maxslen = string_s.len();
+    }
+  }
+
+  let mut ans = String::from("");
+  for (a, (s,w,l)) in &scores {
+    ans = format!("{}:{}") // 同じ文字の繰り返しはどうやる？
+  }
+}
+
+fn print_scores (scores: Vec<(String, (i32, i32, i32))>) {
+  print!("{}", string_of_scores(scores));
+}
+
+/**
+ * wait_start: state = 0
+ * my_move   : state = 1 
+ * op_move   : state = 2
+ * proc_end  : state = 3
+ */
+
 
 fn main() {
   let matches = App::new("Reversi")
