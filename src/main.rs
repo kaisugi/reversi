@@ -92,6 +92,16 @@ fn print_hist (x: &Hist) {
   println!("{}", string_of_hist(x));
 }
 
+/**
+ * 最終的な対戦結果を表示する print_scores 関数はなぜか実装が上手くいかないので、 
+ * 一旦コメントアウトしてある。
+ * この関数は対戦結果を表示するためだけにあり、オセロの打ち方・強さには一切関係が無いので
+ * 無理に実装する必要はないだろう。
+ * 
+ * このプログラムでは最終的な対戦結果を表示する代わりに、
+ * "Successfully terminated." という文字列を表示させている。
+ */
+
 //fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) -> String {
 //  let mut maxlen = 0;
 //  for (a, _) in &scores {
