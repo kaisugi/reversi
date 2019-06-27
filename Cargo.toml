@@ -1,6 +1,6 @@
 [package]
 name = "reversi"
-version = "0.8.0"
+version = "0.8.1"
 authors = ["Kaito Sugimoto <7X.rusk@gmail.com>"]
 edition = "2018"
 

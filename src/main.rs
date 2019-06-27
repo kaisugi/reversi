@@ -119,7 +119,7 @@ fn playing_games(state: State, reader: &mut BufReader<&TcpStream>, writer: &mut 
           }
         }
         other_commands => {
-          println!("Bye か Start か Move が来ることを予期していますが、実際には{:?}が来ています", other_commands);
+          println!("Bye か Start が来ることを予期していますが、実際には{:?}が来ています", other_commands);
           panic!("Invalid Command");
         }
       }
