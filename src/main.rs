@@ -19,10 +19,9 @@ use play::*;
 use command_lexer::*;
 use command_parser::*;
 
-fn input_command (stream: &TcpStream) -> Command {
+fn input_command (reader: &mut BufReader<&TcpStream>) -> Command {
   let report_recv = |s: &String| print!("Received: {}", *s);
 
-  let mut reader = BufReader::new(stream);
   let mut msg = String::new();
   reader.read_line(&mut msg).expect("RECEIVE FAILURE!!!");
   report_recv(&msg);
@@ -32,27 +31,25 @@ fn input_command (stream: &TcpStream) -> Command {
   parse(&mut tokens)
 }
 
-fn input_command_multi (stream: &TcpStream) -> Command {
-  match input_command(stream) {
-    Command::Empty => input_command_multi(stream),
+fn input_command_multi (reader: &mut BufReader<&TcpStream>) -> Command {
+  match input_command(reader) {
+    Command::Empty => input_command_multi(reader),
     r              => r
   }
 }
 
-fn output_command(stream: &TcpStream, command: Command) {
+fn output_command(writer: &mut BufWriter<&TcpStream>, command: Command) {
   let report_sent = |s: String| print!("Sent: {}", s);
 
   match command {
     Command::Move(mv) => {
       let msg = format!("MOVE {}\n", string_of_move(mv));
-      let mut writer = BufWriter::new(stream);
       writer.write(msg.as_bytes()).expect("SEND FAILURE!!!");
       writer.flush().unwrap();
       report_sent(msg);
     }
     Command::Open(s) => {
       let msg = format!("OPEN {}\n", s);
-      let mut writer = BufWriter::new(stream);
       writer.write(msg.as_bytes()).expect("SEND FAILURE!!!");
       writer.flush().unwrap();
       report_sent(msg);
@@ -133,31 +130,28 @@ fn print_hist (x: &Hist) {
 enum State {
   WaitStart,
   MyMove,
-  OpMove,
-  ProcEnd
+  OpMove
 }
 
-fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Color, 
-                 hist: &mut Hist, oname: &mut String, mytime: &mut i32,
-                 wl: &mut Wl, n: &mut i32, m: &mut i32, r: &mut String, opt_verbose: bool, opt_player_name: String) {
+fn playing_games(state: State, reader: &mut BufReader<&TcpStream>, writer: &mut BufWriter<&TcpStream>, board: &mut Board, color: Color, 
+                 hist: &mut Hist, oname: &mut String, opt_verbose: bool, opt_player_name: String) {
   match state {
     State::WaitStart => {
-      match input_command_multi(stream) {
+      match input_command_multi(reader) {
         Command::Bye(_scores) => {
           println!("\nSuccessfully terminated.");
         }
-        Command::Start(color, oname_new, mytime_new) => {
+        Command::Start(color, oname_new, _mytime) => {
           *board = init_board();
           *oname = oname_new;
-          *mytime = mytime_new;
           if color == black {
-            playing_games(State::MyMove, stream, board, black, &mut Vec::new(), oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+            playing_games(State::MyMove, reader, writer, board, black, &mut Vec::new(), oname, opt_verbose, opt_player_name);
           } else {
-            playing_games(State::OpMove, stream, board, white, &mut Vec::new(), oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+            playing_games(State::OpMove, reader, writer, board, white, &mut Vec::new(), oname, opt_verbose, opt_player_name);
           }
         }
         other_commands => {
-          println!("Bye か Start が来ることを予期していますが、実際には{:?}が来ています", other_commands);
+          println!("Bye か Start か Move が来ることを予期していますが、実際には{:?}が来ています", other_commands);
           panic!("Invalid Command");
         }
       }
@@ -165,7 +159,7 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
     State::MyMove => {
       let pmove = play(board, color);
       do_move(board, &pmove, color);
-      output_command(stream, Command::Move(pmove));
+      output_command(writer, Command::Move(pmove));
 
       if opt_verbose {
         println!("--------------------------------------------------------------------------------");
@@ -173,18 +167,21 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
         print_board(board);
       }
 
-      match input_command_multi(stream) {
-        Command::Ack(mytime_new) => {
-          *mytime = mytime_new;
+      match input_command_multi(reader) {
+        Command::Ack(_mytime) => {
           hist.push(OpMove::PMove(pmove));
-          playing_games(State::OpMove, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+          playing_games(State::OpMove, reader, writer, board, color, hist, oname, opt_verbose, opt_player_name);
         }
-        Command::End(wl_new, n_new, m_new, r_new) => {
-          *wl = wl_new;
-          *n = n_new;
-          *m = m_new;
-          *r = r_new;
-          playing_games(State::ProcEnd, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+        Command::End(wl, n, m, r) => {
+          match wl {
+            Wl::Win  => println!("You win! ({} vs. {}) -- {}.", n, m, r),
+            Wl::Lose => println!("You lose! ({} vs. {}) -- {}.", n, m, r),
+            Wl::Tie  => println!("Draw ({} vs. {}) -- {}.", n, m, r)
+          }
+          println!("Your name: {} ({})  Oppnent name: {} ({}).", opt_player_name, string_of_color(color), oname, string_of_color(opposite_color(color)));
+          print_board(board);
+          print_hist(hist);
+          playing_games(State::WaitStart, reader, writer, board, color, hist, oname, opt_verbose, opt_player_name);
         }
         other_commands => {
           println!("Ack か End が来ることを予期していますが、実際には{:?}が来ています", other_commands);
@@ -193,7 +190,7 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
       }
     }
     State::OpMove => {
-      match input_command_multi(stream) {
+      match input_command_multi(reader) {
         Command::Move(omove) => {
           do_move(board, &omove, opposite_color(color));
 
@@ -204,31 +201,24 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
           }
 
           hist.push(OpMove::OMove(omove));
-          playing_games(State::MyMove, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+          playing_games(State::MyMove, reader, writer, board, color, hist, oname, opt_verbose, opt_player_name);
         }
-        Command::End(wl_new, n_new, m_new, r_new) => {
-          *wl = wl_new;
-          *n = n_new;
-          *m = m_new;
-          *r = r_new;
-          playing_games(State::ProcEnd, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
+        Command::End(wl, n, m, r) => {
+          match wl {
+            Wl::Win  => println!("You win! ({} vs. {}) -- {}.", n, m, r),
+            Wl::Lose => println!("You lose! ({} vs. {}) -- {}.", n, m, r),
+            Wl::Tie  => println!("Draw ({} vs. {}) -- {}.", n, m, r)
+          }
+          println!("Your name: {} ({})  Oppnent name: {} ({}).", opt_player_name, string_of_color(color), oname, string_of_color(opposite_color(color)));
+          print_board(board);
+          print_hist(hist);
+          playing_games(State::WaitStart, reader, writer, board, color, hist, oname, opt_verbose, opt_player_name);
         }
         other_commands => {
           println!("Move か End が来ることを予期していますが、実際には{:?}が来ています", other_commands);
           panic!("Invalid Command");
         }
       }
-    }
-    State::ProcEnd => {
-      match wl {
-        Wl::Win  => println!("You win! ({} vs. {}) -- {}.", n, m, r),
-        Wl::Lose => println!("You lose! ({} vs. {}) -- {}.", n, m, r),
-        Wl::Tie  => println!("Draw ({} vs. {}) -- {}.", n, m, r)
-      }
-      println!("Your name: {} ({})  Oppnent name: {} ({}).", opt_player_name, string_of_color(color), oname, string_of_color(opposite_color(color)));
-      print_board(board);
-      print_hist(hist);
-      playing_games(State::WaitStart, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
     }
   }
 }
@@ -284,8 +274,11 @@ fn main() {
         println!("Connection Ok.");
 
         let opt_player_name_clone = opt_player_name.clone();
-        output_command(&stream, Command::Open(opt_player_name));
-        playing_games(State::WaitStart, &stream, &mut Vec::new(), white, &mut Vec::new(), &mut String::new(), &mut 0, &mut Wl::Tie, &mut 0, &mut 0, &mut String::new(), opt_verbose, opt_player_name_clone);
+        let mut reader = BufReader::new(&stream);
+        let mut writer = BufWriter::new(&stream);
+
+        output_command(&mut writer, Command::Open(opt_player_name));
+        playing_games(State::WaitStart, &mut reader, &mut writer, &mut Vec::new(), white, &mut Vec::new(), &mut String::new(), opt_verbose, opt_player_name_clone);
       }
     }
   } else {
