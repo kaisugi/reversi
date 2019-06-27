@@ -89,43 +89,11 @@ fn print_hist (x: &Hist) {
   println!("{}", string_of_hist(x));
 }
 
-/**
- * 最終的な対戦結果を表示する print_scores 関数はなぜか実装が上手くいかないので、 
- * 一旦コメントアウトしてある。
- * この関数は対戦結果を表示するためだけにあり、オセロの打ち方・強さには一切関係が無いので
- * 無理に実装する必要はないだろう。
- * 
- * このプログラムでは最終的な対戦結果を表示する代わりに、
- * "Successfully terminated." という文字列を表示させている。
- */
-
-//fn string_of_scores (scores: Vec<(String, (i32, i32, i32))>) -> String {
-//  let mut maxlen = 0;
-//  for (a, _) in &scores {
-//    if (*a).len() > maxlen {
-//      maxlen = (*a).len();
-//    }
-//  }
-//
-//  let mut maxslen = 0;
-//  for (_, (s,_,_)) in &scores {
-//    let string_s = format!("{}", *s);
-//    if string_s.len() > maxslen {
-//      maxslen = string_s.len();
-//    }
-//  }
-//
-//  let mut ans = String::from("");
-//  for (a, (s,w,l)) in &scores {
-//    ans = format!("{}\n{}:{}{} (Win {}, Lose {})", 
-//      ans, a, " ".repeat(maxslen + 1 - a.len()), s, w, l);
-//  }
-//  ans
-//}
-//
-//fn print_scores (scores: Vec<(String, (i32, i32, i32))>) {
-//  print!("{}", string_of_scores(scores));
-//}
+fn print_scores (scores: Vec<(String, (i32, i32, i32))>) {
+  for (a, (s, w, l)) in scores {
+    println!("{}: {} (Win {}, Lose {})", a, s, w, l);
+  }
+}
 
 enum State {
   WaitStart,
@@ -138,8 +106,8 @@ fn playing_games(state: State, reader: &mut BufReader<&TcpStream>, writer: &mut 
   match state {
     State::WaitStart => {
       match input_command_multi(reader) {
-        Command::Bye(_scores) => {
-          println!("\nSuccessfully terminated.");
+        Command::Bye(scores) => {
+          print_scores(scores);
         }
         Command::Start(color, oname_new, _mytime) => {
           *board = init_board();
