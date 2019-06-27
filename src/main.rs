@@ -156,7 +156,10 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
             playing_games(State::OpMove, stream, board, white, &mut Vec::new(), oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
           }
         }
-        _ => panic!("Invalid Command")
+        other_commands => {
+          println!("Bye か Start が来ることを予期していますが、実際には{:?}が来ています", other_commands);
+          panic!("Invalid Command");
+        }
       }
     }
     State::MyMove => {
@@ -183,7 +186,10 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
           *r = r_new;
           playing_games(State::ProcEnd, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
         }
-        _ => panic!("Invalid Command")
+        other_commands => {
+          println!("Ack か End が来ることを予期していますが、実際には{:?}が来ています", other_commands);
+          panic!("Invalid Command");
+        }
       }
     }
     State::OpMove => {
@@ -207,7 +213,10 @@ fn playing_games(state: State, stream: &TcpStream, board: &mut Board, color: Col
           *r = r_new;
           playing_games(State::ProcEnd, stream, board, color, hist, oname, mytime, wl, n, m, r, opt_verbose, opt_player_name);
         }
-        _ => panic!("Invalid Command")
+        other_commands => {
+          println!("Move か End が来ることを予期していますが、実際には{:?}が来ています", other_commands);
+          panic!("Invalid Command");
+        }
       }
     }
     State::ProcEnd => {

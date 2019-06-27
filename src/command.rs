@@ -1,12 +1,13 @@
 use crate::color::*;
 
+#[derive(Debug)]
 pub enum Wl {
   Win,
   Lose,
   Tie
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Move {
   Mv (i32, i32),
   Pass,
@@ -29,6 +30,7 @@ pub fn string_of_move(m: Move) -> String {
   }
 }
 
+#[derive(Debug)]
 pub enum Command {
   Open (String),
   End (Wl, i32, i32, String),
