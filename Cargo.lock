@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "reversi"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -164,7 +164,7 @@ fn playing_games(state: State, reader: &mut BufReader<&TcpStream>, writer: &mut 
 
           if opt_verbose {
             println!("--------------------------------------------------------------------------------");
-            println!("OMove: {} {}", string_of_move(omove), string_of_color(color));
+            println!("OMove: {} {}", string_of_move(omove), string_of_color(opposite_color(color)));
             print_board(board);
           }
 
