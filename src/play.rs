@@ -2,10 +2,10 @@ use crate::color::*;
 use crate::command::*;
 use rand::Rng;
 
-pub type Board = Vec<Vec<Color>>;
+pub type Board = [[Color; 10]; 10];
 
 pub fn init_board () -> Board {
-  let mut board = vec![vec![0; 10]; 10];
+  let mut board = [[0; 10]; 10];
   for i in 0..10 {
     board[i][0] = sentinel;
     board[i][9] = sentinel;

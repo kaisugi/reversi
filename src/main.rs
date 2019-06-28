@@ -246,7 +246,7 @@ fn main() {
         let mut writer = BufWriter::new(&stream);
 
         output_command(&mut writer, Command::Open(opt_player_name));
-        playing_games(State::WaitStart, &mut reader, &mut writer, &mut Vec::new(), white, &mut Vec::new(), &mut String::new(), opt_verbose, opt_player_name_clone);
+        playing_games(State::WaitStart, &mut reader, &mut writer, &mut [[0; 10]; 10], white, &mut Vec::new(), &mut String::new(), opt_verbose, opt_player_name_clone);
       }
     }
   } else {
