@@ -55,7 +55,7 @@ fn output_command(writer: &mut BufWriter<&TcpStream>, command: Command) {
       report_sent(msg);
     }
     _ => {
-      panic!("Client cannot not send the commands other than MOVE and Open");
+      panic!("Client cannot send the commands other than MOVE and Open");
     }
   }
 }
