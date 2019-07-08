@@ -109,7 +109,7 @@ fn check_tokenize() {
   tokenize(&mut input, &mut tokens);
   assert_eq!(tokens, vec![Token::START, Token::BLACK, Token::STR("Anon.".to_string()), Token::INT(600000), Token::EOF]);
 
-    input = "START BLACK 霧矢あおい 600000".to_string();
+  input = "START BLACK 霧矢あおい 600000".to_string();
   tokens = Vec::new();
   tokenize(&mut input, &mut tokens);
   assert_eq!(tokens, vec![Token::START, Token::BLACK, Token::STR("霧矢あおい".to_string()), Token::INT(600000), Token::EOF]);

@@ -54,13 +54,13 @@ pub fn parse(tokens: &mut Vec<Token>) -> Command {
         _            => panic!("Invalid Command")
       }
     } else {
-      panic!("Invalid Command")
+      panic!("Invalid Command");
     }
   } else if tokens[0] == Token::ACK {
     if let Token::INT(n) = &tokens[1] {
       Command::Ack(*n)
     } else {
-      panic!("Invalid Command")
+      panic!("Invalid Command");
     }
   } else if tokens[0] == Token::BYE {
     tokens.remove(0);
