@@ -1,4 +1,3 @@
-use std::process;
 use regex::Regex;
 
 #[derive(PartialEq, Debug)]
@@ -87,14 +86,8 @@ pub fn tokenize(input: &mut String, tokens: &mut Vec<Token>) {
 }
 
 fn remove_times(s: &mut String, n: usize) {
-  for _ in 0..n {
-    if s.is_empty() {
-      eprintln!("空文字を削除しようとしています");
-      process::exit(1);
-    } else {
-      s.remove(0);
-    }
-  }
+  let s_tmp = &s[n..];
+  *s = s_tmp.to_string();
 }
 
 
@@ -106,10 +99,20 @@ fn check_tokenize() {
   tokenize(&mut input, &mut tokens);
   assert_eq!(tokens, vec![Token::OPEN, Token::STR("Anon.".to_string()), Token::EOF]);
 
+  input = "OPEN 星宮いちご".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::OPEN, Token::STR("星宮いちご".to_string()), Token::EOF]);
+
   input = "START BLACK Anon. 600000".to_string();
   tokens = Vec::new();
   tokenize(&mut input, &mut tokens);
   assert_eq!(tokens, vec![Token::START, Token::BLACK, Token::STR("Anon.".to_string()), Token::INT(600000), Token::EOF]);
+
+    input = "START BLACK 霧矢あおい 600000".to_string();
+  tokens = Vec::new();
+  tokenize(&mut input, &mut tokens);
+  assert_eq!(tokens, vec![Token::START, Token::BLACK, Token::STR("霧矢あおい".to_string()), Token::INT(600000), Token::EOF]);
 
   input = "MOVE D3".to_string();
   tokens = Vec::new();
