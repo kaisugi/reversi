@@ -8,7 +8,7 @@ OCaml のコードを愚直に Rust に移しただけであり、オセロの�
 
 ## Demo
 
-![reversi.gif](https://user-images.githubusercontent.com/36184621/60187967-81e88c80-9869-11e9-827a-001d782e8cce.gif)
+![reversi.gif](https://user-images.githubusercontent.com/36184621/62025241-8ad6d000-b212-11e9-8a62-8af05a0b0e6e.gif)
 
 ※ tmux でターミナルを切り替えており、  
 
@@ -20,7 +20,7 @@ OCaml のコードを愚直に Rust に移しただけであり、オセロの�
 
 [環境構築](https://doc.rust-jp.rs/book/second-edition/ch01-01-installation.html)は済ませてください。  
 
-このリポジトリをクローンします。
+このリポジトリをクローンします。または、[リリース](https://github.com/7ma7X/reversi/releases)から zip をダウンロードすることもできます。
 
 ```
 git clone https://github.com/7ma7X/reversi
