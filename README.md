@@ -20,10 +20,10 @@ OCaml のコードを愚直に Rust に移しただけであり、オセロの�
 
 [環境構築](https://doc.rust-jp.rs/book/second-edition/ch01-01-installation.html)は済ませてください。  
 
-このリポジトリをクローンします。または、[リリース](https://github.com/7ma7X/reversi/releases)から zip をダウンロードすることもできます。
+このリポジトリをクローンします。または、[リリース](https://github.com/HelloRusk/reversi/releases)から zip をダウンロードすることもできます。
 
 ```
-git clone https://github.com/7ma7X/reversi
+git clone https://github.com/HelloRusk/reversi
 cd reversi
 ```
 
